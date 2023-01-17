@@ -12,6 +12,7 @@
         <module>gmall-common</module>
         <module>gmall-mock</module>
         <module>gmall-logger</module>
+        <module>gmall-realtime</module>
     </modules>
 
     <!-- 由于子模块会用到 springboot, 而 springboot 必须使用这个父项目: spring-boot-starter-parent,
@@ -112,7 +113,7 @@
 
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-streaming-kafka-0-8_2.11</artifactId>
+                <artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
                 <version>${spark.version}</version>
             </dependency>
         </dependencies>

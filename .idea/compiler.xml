@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="gmall-mock" />
         <module name="gmall-common" />
+        <module name="gmall-realtime" />
         <module name="gmall-logger" />
       </profile>
     </annotationProcessing>
