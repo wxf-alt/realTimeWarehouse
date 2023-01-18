@@ -8,14 +8,21 @@
         <outputRelativeToContentRoot value="true" />
         <module name="gmall-mock" />
         <module name="gmall-common" />
+        <module name="dw-chart" />
         <module name="gmall-realtime" />
+        <module name="gmall-publisher" />
         <module name="gmall-logger" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="demo" target="1.8" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="demo" options="" />
       <module name="gmall-logger" options="" />
+      <module name="gmall-publisher" options="" />
     </option>
   </component>
 </project>

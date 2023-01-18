@@ -12,15 +12,14 @@ import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{HasOffsetRanges, OffsetRange}
-import org.apache.spark.streaming.{Duration, Seconds, StreamingContext}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
 import redis.clients.jedis.Jedis
-import util.{MyKafkaUtil, RedisUtil}
+import utils.{MyKafkaUtil, PropertiesUtil, RedisUtil}
 import java.util
-import java.util.Date
+import util.{Date, Properties}
 
 import org.apache.spark.broadcast.Broadcast
-
-import scala.collection.mutable
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 
 
 /**
@@ -36,8 +35,8 @@ object DauApp {
   def main(args: Array[String]): Unit = {
 
     val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("DauApp")
-
-    val ssc: StreamingContext = new StreamingContext(conf, Seconds(1))
+    val ssc: StreamingContext = new StreamingContext(conf, Seconds(2))
+    val sparkSession: SparkSession = SparkSession.builder().config(conf).getOrCreate()
 
     // 1.从 Kafka 读取数据
     // 读取启动日志 topic
@@ -67,6 +66,7 @@ object DauApp {
               log.logDate = dateFormat.format(date)
               log.logHour = dateFormat1.format(date)
               logDate = log.logDate
+              //              println("StartUpLog：" + log)
               log
             })
           })
@@ -81,11 +81,17 @@ object DauApp {
         // 封装 样例类
         val uidSetBC: Broadcast[util.Set[String]] = ssc.sparkContext.broadcast(midSet)
 
-        val filterStartupLogRDD: RDD[StartUpLog] = dataRDD.filter(startupLog => {
-          val mids: util.Set[String] = uidSetBC.value
-          // 2.2 把已经启动的设备过滤掉, rdd中只留下那些在redis中不存在的记录
-          !mids.contains(startupLog.mid)
-        })
+        val filterStartupLogRDD: RDD[StartUpLog] = dataRDD
+          // 进行去重操作
+          .groupBy(_.mid)
+          .map({
+            case (_, it) => it.minBy(_.ts)
+          })
+          .filter(startupLog => {
+            val mids: util.Set[String] = uidSetBC.value
+            // 2.2 把已经启动的设备过滤掉, rdd中只留下那些在redis中不存在的记录
+            !mids.contains(startupLog.mid)
+          })
 
         // 2.3 把第一次启动的设备保存到 redis 中
         filterStartupLogRDD.foreachPartition(x => {
@@ -99,9 +105,39 @@ object DauApp {
           jedis.close()
         })
 
-        // 3.将日活明细保存到 HBase 中
+        //        // 3.将日活明细保存到 HBase 中
+        //        // 需要先将表在 phoenix 中创建好
+        //        /*
+        //        create table gmall_dau(
+        //                        mid varchar,
+        //                        uid varchar,
+        //                        appid varchar,
+        //                        area varchar,
+        //                        os varchar,
+        //                        channel varchar,
+        //                        logType varchar,
+        //                        version varchar,
+        //                        logDate varchar,
+        //                        logHour varchar,
+        //                        ts bigint
+        //                        CONSTRAINT dau_pk PRIMARY KEY (mid,logDate));
+        //         */
+        //        import org.apache.phoenix.spark._
+        //        filterStartupLogRDD.saveToPhoenix("gmall",
+        //          Seq("MID", "UID", "APPID", "AREA", "OS", "CHANNEL", "LOGTYPE", "VERSION", "TS", "LOGDATE", "LOGHOUR"),
+        //          zkUrl = Some("nn1.hadoop,nn2.hadoop,s1.hadoop:2181")
+        //        )
 
+        import sparkSession.implicits._
+        // 嫌麻烦,还要安装 Hadoop - HBase集群 和 phoenix
+        //    所以使用 MySql 存储 日活数据
+        val startupLogDS: Dataset[StartUpLog] = filterStartupLogRDD.toDS()
+        val properties: Properties = new Properties()
+        properties.setProperty("user", PropertiesUtil.getProperty("mysql.user"))
+        // 4.将数据写到Mysql中
+        properties.setProperty("password", PropertiesUtil.getProperty("mysql.password"))
 
+        startupLogDS.write.mode(SaveMode.Append).jdbc(PropertiesUtil.getProperty("mysql.url"), "gmall", properties)
 
         for (o <- offsetRanges) {
           val zkPath: String = s"${zkTopicPath}/${o.partition}"

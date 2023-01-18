@@ -1,7 +1,7 @@
 import java.util.Date
 
 import com.alibaba.fastjson.{JSON, JSONObject}
-import util.{LogUploader, RandomNumUtil, RandomOptions}
+import utils.{LogUploader, RandomNumUtil, RandomOptions}
 
 /**
  * @Auther: wxf
@@ -65,7 +65,7 @@ object JsonMock {
     `area` string COMMENT '城市'
     `channel` string COMMENT '渠道'
      */
-    val mid: String = "mid_" + RandomNumUtil.randomInt(1, 500)
+    val mid: String = "mid_" + RandomNumUtil.randomInt(1, 5000)
     val uid: String = "" + RandomNumUtil.randomInt(1, 10000)
     val os: String = osOpts.getRandomOption()
     val appId: String = this.appId
@@ -124,14 +124,14 @@ object JsonMock {
       val oneStartupLog: String = initOneStartupLog()
       println(oneStartupLog)
       // 发送启动日志
-      //      LogUploader.sendLog(oneStartupLog)
+      LogUploader.sendLog(oneStartupLog)
       // 模拟出来多条事件日志
       while (!quitOpts.getRandomOption()) {
         // 生成一条事件日志
         val oneEventLog: String = initOneEventLog(oneStartupLog)
         //        println(oneEventLog)
         // 发送事件日志
-        //        LogUploader.sendLog(oneEventLog)
+        LogUploader.sendLog(oneEventLog)
         Thread.sleep(100)
       }
       Thread.sleep(1000)

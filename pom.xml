@@ -13,6 +13,7 @@
         <module>gmall-mock</module>
         <module>gmall-logger</module>
         <module>gmall-realtime</module>
+        <module>gmall-publisher</module>
     </modules>
 
     <!-- 由于子模块会用到 springboot, 而 springboot 必须使用这个父项目: spring-boot-starter-parent,
@@ -116,6 +117,13 @@
                 <artifactId>spark-streaming-kafka-0-10_2.11</artifactId>
                 <version>${spark.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.codehaus.janino</groupId>
+                <artifactId>commons-compiler</artifactId>
+                <version>2.7.8</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 
