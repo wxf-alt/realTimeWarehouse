@@ -25,6 +25,7 @@ public class PublisherController {
     PublisherServiceImpl publisherService;
 
     // http://localhost:8070/realtime-total?date=2020-02-11
+    // http://localhost:8070/realtime-total?date=2023-01-29
     @GetMapping("/realtime-total")
     public String realtimeTotal(@RequestParam("date") String date) {
         ArrayList<Map<String, String>> list = new ArrayList<>();
@@ -41,10 +42,17 @@ public class PublisherController {
         map2.put("value", "233");
         list.add(map2);
 
+        HashMap<String, String> map3 = new HashMap<>();
+        map3.put("id", "order_amount");
+        map3.put("name", "新增交易额");
+        map3.put("value", publisherService.getTotalAmount(date).toString());
+        list.add(map3);
+
         return JSON.toJSONString(list);
     }
 
     // http://localhost:8070/realtime-hour?id=dau&date=2020-02-11
+    // http://localhost:8070/realtime-hour?id=order_amount&date=2023-01-29
     @GetMapping("/realtime-hour")
     public String realtimeHour(@RequestParam("id") String id, @RequestParam("date") String date) {
         if ("dau".equals(id)) {
@@ -54,10 +62,18 @@ public class PublisherController {
             resultMap.put("today", toDayCount);
             resultMap.put("yesterday", yesterDayCount);
             return JSON.toJSONString(resultMap);
+        } else if ("order_amount".equals(id)) {
+            Map<String, Double> toDayCount = publisherService.getHourAmount(date);
+            Map<String, Double> yesterDayCount = publisherService.getHourAmount(getYesterday(date));
+            Map<String, Map<String, Double>> resultMap = new HashMap<>();
+            resultMap.put("today", toDayCount);
+            resultMap.put("yesterday", yesterDayCount);
+            return JSON.toJSONString(resultMap);
         } else {
             return "";
         }
     }
+
 
     private String getYesterday(String date) {
 //        LocalDate result = LocalDate.parse(date).plusDays(-1);
@@ -75,4 +91,14 @@ public class PublisherController {
 2.日活分时统计
 {"yesterday":{"11":383,"12":123,"17":88,"19":200 },
 "today":{"12":38,"13":1233,"17":123,"19":688 }}
+
+3.总销售额
+[{"id":"dau","name":"新增日活","value":1200},
+{"id":"new_mid","name":"新增设备","value":233 },
+{"id":"order_amount","name":"新增交易额","value":1000.2 }]
+
+4.小时销售额
+{"yesterday":{"11":383,"12":123,"17":88,"19":200 },
+"today":{"12":38,"13":1233,"17":123,"19":688 }}
+
  */
