@@ -40,7 +40,8 @@ object DauApp {
 
     // 1.从 Kafka 读取数据
     // 读取启动日志 topic
-    val (kafkaStream, zkClient, zkTopicPath): (InputDStream[ConsumerRecord[String, String]], ZkClient, String) = MyKafkaUtil.getKafkaStream(ssc, Constant.TOPIC_STARTUP)
+    //    val (kafkaStream, zkClient, zkTopicPath): (InputDStream[ConsumerRecord[String, String]], ZkClient, String) = MyKafkaUtil.getKafkaStream(ssc, Constant.TOPIC_STARTUP)
+    val (kafkaStream, zkClient, zkTopicPath): (InputDStream[ConsumerRecord[String, String]], ZkClient, String) = MyKafkaUtil.getKafkaStream(ssc, Constant.TOPIC_STARTUP, PropertiesUtil.getProperty("kafka.dau.group.id"))
 
     //通过rdd转换得到偏移量的范围
     var offsetRanges: Array[OffsetRange] = Array[OffsetRange]()

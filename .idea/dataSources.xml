@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="@localhost" uuid="388e55ce-fded-4db6-a728-aec8829a8523">
+    <data-source source="LOCAL" name="s1.hadoop" uuid="29733914-773c-48ec-b6d0-737c6aea1a9c">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
-      <jdbc-url>jdbc:mysql://localhost:3306</jdbc-url>
+      <jdbc-url>jdbc:mysql://s1.hadoop:3306/gmall</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="localhost" uuid="3d91b36a-8e57-446e-b23c-2ed3f8cd6b98">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/db</jdbc-url>
     </data-source>
   </component>
 </project>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="Maven 1" modules="demo,gmall-common,gmall-logger,gmall-mock,gmall-publisher,gmall-realtime,realTimeWarehouse" />
+    <profile name="Maven 1" modules="demo,gmall-canal,gmall-common,gmall-logger,gmall-mock,gmall-publisher,gmall-realtime,realTimeWarehouse" />
   </component>
 </project>
