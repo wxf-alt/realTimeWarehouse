@@ -19,7 +19,7 @@ import utils.{MyKafkaUtil, PropertiesUtil}
 
 object OrderApp {
   def main(args: Array[String]): Unit = {
-    val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("DauApp")
+    val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("OrderApp")
     val ssc: StreamingContext = new StreamingContext(conf, Seconds(2))
     val sparkSession: SparkSession = SparkSession.builder().config(conf).getOrCreate()
 
