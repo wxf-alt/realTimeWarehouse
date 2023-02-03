@@ -6,7 +6,7 @@ import java.util.{Date, Properties}
 
 import bean.{AlertInfo, EventLog, StartUpLog}
 import com.alibaba.fastjson.JSON
-import common.Constant
+import common.{Constant, ESUtil}
 import kafka.utils.ZkUtils
 import org.I0Itec.zkclient.ZkClient
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -66,7 +66,10 @@ object AlertApp {
 
     //     保存偏移量
     transformStream.foreachRDD(rdd => {
-      val result: RDD[(Boolean, AlertInfo)] = rdd.map(event => (event.mid, event))
+
+      // 获取 预警信息
+      val result: RDD[(Boolean, AlertInfo)] = rdd
+        .map(event => (event.mid, event))
         .groupByKey() // 2.按照 同一个 mid 进行分组
         .map { // 3.三个不同账号登录；4.领取优惠券；5.并且没有浏览商品
           case (mid, events) =>
@@ -97,9 +100,19 @@ object AlertApp {
             }
             // (是否需要预警，预警信息)
             (uidSet.size() >= 3 && !isClickItem, AlertInfo(mid, uidSet, itemSet, eventList, System.currentTimeMillis()))
-        }
+        }.cache()
 
       // 6.同一设备每分钟只预警一次(同一设备, 每分钟只向 es 写一次记录)
+      // 连接 es
+      // 写出数据
+      // 关闭 es 连接
+      result
+        .filter(_._1)
+        .map(_._2)
+        .foreachPartition(it => {
+          val data: Iterator[(String, AlertInfo)] = it.map(info => (info.mid + ":" + info.ts / 1000 / 60, info))
+          ESUtil.insertBulk(Constant.INDEX_ALTER, data)
+        })
 
       println("=================")
       result.foreach(println)

@@ -67,21 +67,27 @@ object CanalClient {
   def handleData(tableName: String,
                  rowDatas: util.List[CanalEntry.RowData],
                  eventType: CanalEntry.EventType) = {
-    if (tableName.toLowerCase == "order_info" &&
-      eventType == EventType.INSERT &&
-      rowDatas != null && rowDatas.nonEmpty) {
-      for (rowData <- rowDatas) {
-        val jsonObject: JSONObject = new JSONObject()
-        // 1.获取 一行中 所有的 变化后 的列
-        val columnList: util.List[CanalEntry.Column] = rowData.getAfterColumnsList
-        // 2.将多列数据封装到一个Json字符串中
-        for (column <- columnList) {
-          val name: String = column.getName
-          val value: String = column.getValue
-          jsonObject.put(name, value)
-        }
-        MyKafkaUtil.send(Constant.TOPIC_ORDER_INFO, jsonObject.toJSONString)
+    if (tableName.toLowerCase == "order_info" && eventType == EventType.INSERT && rowDatas != null && rowDatas.nonEmpty) {
+      sendToKafka(rowDatas, Constant.TOPIC_ORDER_INFO)
+    } else if (tableName.toLowerCase == "order_detail" && eventType == EventType.INSERT && rowDatas != null && rowDatas.nonEmpty) {
+      sendToKafka(rowDatas, Constant.TOPIC_ORDER_DETAIL)
+    }
+
+  }
+
+  def sendToKafka(rowDatas: util.List[CanalEntry.RowData], topic: String): Unit = {
+    for (rowData <- rowDatas) {
+      val jsonObject: JSONObject = new JSONObject()
+      // 1.获取 一行中 所有的 变化后 的列
+      val columnList: util.List[CanalEntry.Column] = rowData.getAfterColumnsList
+      // 2.将多列数据封装到一个Json字符串中
+      for (column <- columnList) {
+        val name: String = column.getName
+        val value: String = column.getValue
+        jsonObject.put(name, value)
       }
+      //      println(jsonObject.toJSONString)
+      MyKafkaUtil.send(topic, jsonObject.toJSONString)
     }
   }
 
