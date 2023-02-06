@@ -10,6 +10,7 @@ import common.Constant
 import utils.MyKafkaUtil
 
 import scala.collection.convert.wrapAll._
+import scala.util.Random
 
 /**
  * @Auther: wxf
@@ -87,7 +88,16 @@ object CanalClient {
         jsonObject.put(name, value)
       }
       //      println(jsonObject.toJSONString)
-      MyKafkaUtil.send(topic, jsonObject.toJSONString)
+      //      MyKafkaUtil.send(topic, jsonObject.toJSONString)
+
+      // 模拟延迟情况
+      new Thread() {
+        override def run() = {
+          Thread.sleep(new Random().nextInt(10 * 1000))
+          MyKafkaUtil.send(topic, jsonObject.toJSONString)
+        }
+      }.start()
+
     }
   }
 

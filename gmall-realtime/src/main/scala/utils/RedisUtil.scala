@@ -22,11 +22,11 @@ object RedisUtil {
     jedisClient
   }
 
-  def main(args: Array[String]): Unit = {
-    val jedis: Jedis = getClient()
-    //    val set: util.Set[String] = jedis.smembers("topic_startup_2023-01-16")
-    val long: lang.Long = jedis.sadd("test_topic", "as", "rd")
-    println(long)
-  }
+  //  def main(args: Array[String]): Unit = {
+  //    val jedis: Jedis = getClient()
+  //    //    val set: util.Set[String] = jedis.smembers("topic_startup_2023-01-16")
+  //    val long: lang.Long = jedis.sadd("test_topic", "as", "rd")
+  //    println(long)
+  //  }
 
 }

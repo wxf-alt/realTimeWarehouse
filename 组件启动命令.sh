@@ -1,7 +1,9 @@
 redis：
+    su - root
 	redis-server /usr/local/redis/redis.conf
 	redis-cli -h nn1.hadoop -p 6379
 zookeeper：
+    su - hadoop
      ./ssh_all.sh /usr/local/zookeeper/bin/zkServer.sh start
 kafka：
 	./ssh_all.sh "nohup /usr/local/kafka/bin/kafka-server-start.sh /usr/local/kafka/config/server.properties > /tmp/kafka_logs 2>&1 &"
