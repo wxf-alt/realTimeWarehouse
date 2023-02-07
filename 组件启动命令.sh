@@ -1,5 +1,6 @@
 redis：
     su - root
+    cd /usr/local/redis
 	redis-server /usr/local/redis/redis.conf
 	redis-cli -h nn1.hadoop -p 6379
 zookeeper：

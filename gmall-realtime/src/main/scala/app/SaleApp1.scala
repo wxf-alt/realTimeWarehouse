@@ -9,7 +9,7 @@ import common.Constant
 import org.I0Itec.zkclient.ZkClient
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{SparkConf}
 import org.apache.spark.sql.{DataFrame, Dataset, SparkSession}
 import org.apache.spark.streaming.dstream.{DStream, InputDStream}
 import org.apache.spark.streaming.kafka010.{CanCommitOffsets, HasOffsetRanges, OffsetRange}
@@ -166,6 +166,8 @@ object SaleApp1 {
   def main(args: Array[String]): Unit = {
 
     val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("AlertApp")
+    conf.set("es.nodes", PropertiesUtil.getProperty("es.nodes"))
+    conf.set("es.port", PropertiesUtil.getProperty("es.port"))
     val ssc: StreamingContext = new StreamingContext(conf, Seconds(2))
 
     val (kafkaOrderInfoStream, zkClient1, zkTopicPath1): (InputDStream[ConsumerRecord[String, String]], ZkClient, String) =
@@ -213,15 +215,18 @@ object SaleApp1 {
 
     saleDetailStream = joinUser(saleDetailStream, ssc)
 
-    saleDetailStream.foreachRDD { rdd =>
+    saleDetailStream.foreachRDD { saleRdd =>
       println("----------------------" + System.currentTimeMillis() + "----------------------")
-      rdd.foreach(println)
+      saleRdd.foreach(println)
+
+      // 输出 ES
+      import org.elasticsearch.spark._
+      saleRdd.saveToEs(PropertiesUtil.getProperty("es.sale"))
 
       // 更新偏移量
       kafkaOrderInfoStream.asInstanceOf[CanCommitOffsets].commitAsync(infoOffsetRanges)
       kafkaOrderDetailStream.asInstanceOf[CanCommitOffsets].commitAsync(detailOffsetRanges)
     }
-
 
     ssc.start()
     ssc.awaitTermination()
