@@ -8,4 +8,6 @@ public class Constant {
 
 
     public static final String INDEX_ALTER = "gmall_coupon_alert";
+    public static final String INDEX_SALE_DETAIL = "gmall_sale_detail";
+
 }

@@ -2,9 +2,17 @@ package com.example.gmallpublisher.service;
 
 import com.example.gmallpublisher.mapper.DauMapper;
 import com.example.gmallpublisher.mapper.OrderInfoMapper;
+import common.Constant;
+import common.ESUtil;
+import io.searchbox.client.JestClient;
+import io.searchbox.core.Search;
+import io.searchbox.core.SearchResult;
+import io.searchbox.core.search.aggregation.TermsAggregation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,4 +66,54 @@ public class PublisherServiceImpl implements PublisherService {
         }
         return hashMap;
     }
+
+    // 根据参数 从 ES 获取数据
+    @Override
+    public Map<String, Object> getSaleDetailAndAggGroupByField(String date,
+                                                               String keyWord,
+                                                               int startPage,
+                                                               int sizePerPage,
+                                                               String aggField,
+                                                               int aggCount) throws IOException {
+
+        HashMap<String, Object> result = new HashMap<>();
+
+        // 1.获取 ES 客户端
+        JestClient jestClient = ESUtil.getClient();
+        // 2. 查询数据
+        String detalDSL = DSLs.getSaleDetailDSL(date, keyWord, startPage, sizePerPage, aggField, aggCount);
+        Search search = new Search.Builder(detalDSL)
+                .addIndex(Constant.INDEX_SALE_DETAIL)
+                .addType("_doc")
+                .build();
+        SearchResult searchResult = jestClient.execute(search);
+        // 3. 解析数据
+        // 3.1 总数
+        Integer total = searchResult.getTotal();
+        result.put("total", total);
+        // 3.2 明细
+        List<SearchResult.Hit<HashMap, Void>> hits = searchResult.getHits(HashMap.class);
+        ArrayList<HashMap> detail = new ArrayList<>();
+        for (SearchResult.Hit<HashMap, Void> hit : hits) {
+            HashMap source = hit.source;
+            detail.add(source);
+        }
+        result.put("detail", detail);
+        // 3.3 聚合结果
+        HashMap<String, Long> aggMap = new HashMap<>();
+        List<TermsAggregation.Entry> buckets = searchResult.getAggregations()
+                .getTermsAggregation("group_" + aggField)
+                .getBuckets();
+        for (TermsAggregation.Entry bucket : buckets) {
+            String key = bucket.getKey();
+            Long count = bucket.getCount();
+            aggMap.put(key,count);
+        }
+        result.put("agg", aggMap);
+
+        // 4. 返回最终结果
+        return result;
+    }
+
+
 }

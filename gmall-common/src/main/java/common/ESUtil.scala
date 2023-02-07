@@ -49,6 +49,9 @@ object ESUtil {
   }
 
 
+  def getClient: JestClient = factory.getObject
+
+
   /**
    * @Description:
    * @Author: wxf

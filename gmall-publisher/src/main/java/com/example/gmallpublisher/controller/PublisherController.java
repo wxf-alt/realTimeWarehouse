@@ -1,16 +1,22 @@
 package com.example.gmallpublisher.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.example.gmallpublisher.bean.Option;
+import com.example.gmallpublisher.bean.SaleInfo;
 import com.example.gmallpublisher.service.PublisherServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.example.gmallpublisher.bean.Stat;
 
 /**
  * @Auther: wxf
@@ -72,6 +78,72 @@ public class PublisherController {
         } else {
             return "";
         }
+    }
+
+    //  http://localhost:8070/sale_detail?date=2019-05-20&&startpage=1&&size=5&&keyword=手机小米
+    @GetMapping("/sale_detail")
+    public String saleDetail(@RequestParam("date") String date,
+                             @RequestParam("startpage") int startpage,
+                             @RequestParam("size") int size,
+                             @RequestParam("keyword") String keyword) throws IOException {
+
+        Map<String, Object> resultGender = publisherService.getSaleDetailAndAggGroupByField(
+                date,
+                keyword,
+                startpage, size,
+                "user_gender",
+                2);
+        Map<String, Object> resultAge = publisherService.getSaleDetailAndAggGroupByField(
+                date,
+                keyword,
+                startpage, size,
+                "user_age",
+                100);
+
+        // 最终返回结果
+        SaleInfo saleInfo = new SaleInfo();
+        // 1.封装总数（两个结果中任何一个都可以）
+        saleInfo.setTotal((Integer) resultGender.get("total"));
+        // 2.封装明细（两个结果集都是一样的(ES)）
+        List<Map<String, Object>> detail = (List<Map<String, Object>>) resultGender.get("detail");
+        saleInfo.setDetail(detail);
+        // 3.封装 聚合结果 饼图
+        // 3.1 性别饼图
+        Stat genderStat = new Stat();
+        genderStat.setTitle("用户性别占比");
+        Map<String, Long> genderAgg = (Map<String, Long>) resultGender.get("agg");
+        for (String key : genderAgg.keySet()) {
+            Option opt = new Option();
+            String gender = ("M".equals(key) ? "男" : "女");
+            opt.setName(gender);  // 饼图性别
+            opt.setValue(genderAgg.get(key));  // 性别对应个数
+            genderStat.addOptions(opt); // 添加到性别饼图中
+        }
+        saleInfo.addStat(genderStat);
+        // 3.2 年龄饼图
+        Stat ageStat = new Stat();
+        ageStat.addOptions(new Option("20岁以下", 0L));
+        ageStat.addOptions(new Option("20岁到30岁", 0L));
+        ageStat.addOptions(new Option("30岁及以上", 0L));
+        ageStat.setTitle("用户年龄占比");
+        Map<String, Long> ageAgg = (Map<String, Long>) resultAge.get("agg");
+        for (String key : ageAgg.keySet()) {
+            int age = Integer.parseInt(key);
+            Long value = ageAgg.get(key);
+            if ((age < 20)) {
+                Option opt = ageStat.getOptions().get(0);
+                opt.setValue(opt.getValue() + value);
+            } else if (age < 30) {
+                Option opt = ageStat.getOptions().get(1);
+                opt.setValue(opt.getValue() + value);
+            } else {
+                Option opt = ageStat.getOptions().get(2);
+                opt.setValue(opt.getValue() + value);
+            }
+        }
+        saleInfo.addStat(ageStat);
+
+        return JSON.toJSONString(saleInfo);
     }
 
 
